@@ -1,6 +1,6 @@
 module aggron
 
-go 1.24.0
+go 1.24.2
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect

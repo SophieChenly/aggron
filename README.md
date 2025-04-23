@@ -20,14 +20,15 @@ OR if you want to build and run the binary (production)
 
 
 ## Project Structure
-
+```
 ├── internal/
 │   ├── api/
-│   │   └── handlers.go      # where the endpoints controller goes
+│   │   └── handlers.go  # where the endpoints controller goes
 │   ├── bot/
-│   │   └── discord.go       # where the discord bot handler goes
+│   │   └── discord.go   # where the discord bot handler goes
 │   ├── models/
 │   │   └── types.go
-│   └── services/            # handles business logic (i.e. 1password, file uploads, encryption classes)
+│   └── services/        # handles business logic (i.e. 1password, file uploads, encryption classes)
 │       ├── service.go
 │
+```
