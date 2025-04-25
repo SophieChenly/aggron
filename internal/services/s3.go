@@ -1,4 +1,4 @@
-package s3
+package services
 
 import (
 	"bytes"
@@ -14,13 +14,12 @@ import (
 )
 
 type S3Config struct {
-	Region string
-	AccessKeyID string
+	Region          string
+	AccessKeyID     string
 	SecretAccessKey string
-	Bucket string
-	Timeout time.Duration
+	Bucket          string
+	Timeout         time.Duration
 }
-
 
 type S3Service interface {
 	UploadFile(ctx context.Context, key string, content []byte, contentType string) (string, error)
@@ -34,10 +33,10 @@ type S3 struct {
 
 func NewS3(config S3Config) (*S3, error) {
 	if config.Timeout == 0 {
-		config.Timeout = 30  * time.Second
+		config.Timeout = 30 * time.Second
 	}
 
-	creds := credentials.NewStaticCredentialsProvider( 
+	creds := credentials.NewStaticCredentialsProvider(
 		config.AccessKeyID,
 		config.SecretAccessKey,
 		"", // optional session token
@@ -55,7 +54,7 @@ func NewS3(config S3Config) (*S3, error) {
 
 	client := s3.NewFromConfig(cfg)
 
-	return &S3 {
+	return &S3{
 		client: client,
 		bucket: config.Bucket,
 		config: config,
@@ -70,9 +69,9 @@ func (s *S3) UploadFile(ctx context.Context, key string, content []byte, content
 	}
 
 	input := &s3.PutObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key: aws.String(key),
-		Body: bytes.NewReader(content),
+		Bucket:      aws.String(s.bucket),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(content),
 		ContentType: aws.String(contentType),
 	}
 
@@ -96,7 +95,7 @@ func (s *S3) DeleteFile(ctx context.Context, key string) error {
 
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key: aws.String(key),
+		Key:    aws.String(key),
 	}
 
 	_, err := s.client.DeleteObject(ctx, input)
