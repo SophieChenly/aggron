@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"aggron/internal/config"
+	"fmt"
+)
 
 func main() {
 	fmt.Println("Hello World")
+	config.LoadEnvVariables()
 }
