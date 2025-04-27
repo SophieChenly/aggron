@@ -1,12 +1,15 @@
 package main
 
 import (
+	"aggron/internal/api"
 	"aggron/internal/config"
 	"aggron/internal/db"
 	"aggron/internal/repository"
 	"aggron/internal/services"
 	"log"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -34,4 +37,9 @@ func main() {
 	}
 
 	// init handlers
+	router := gin.Default()
+	router.MaxMultipartMemory = 8 << 24 // 8 Mib
+	router.POST("/upload", api.UploadFile)
+
+	router.Run(":8080")
 }
