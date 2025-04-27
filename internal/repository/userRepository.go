@@ -25,7 +25,7 @@ func NewUserRepository(db *mongo.Database) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, discordID, passageID string) (*models.User, error) {
 	existingUser, _ := r.FindByDiscordID(ctx, discordID)
-	if existingUser != nil {
+	if existingUser == nil {
 		return nil, errors.New("user with this Discord ID already exists")
 	}
 
