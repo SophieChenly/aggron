@@ -23,6 +23,8 @@ type S3Config struct {
 
 type S3Service interface {
 	UploadFile(ctx context.Context, key string, content []byte, contentType string) (string, error)
+	DownloadFile(ctx context.Context, key string) ([]byte, error)
+	DeleteFile(ctx context.Context, key string) error
 }
 
 type S3 struct {
@@ -104,4 +106,31 @@ func (s *S3) DeleteFile(ctx context.Context, key string) error {
 	}
 
 	return nil
+}
+
+func (s *S3) DownloadFile(ctx context.Context, key string) ([]byte, error) {
+	if s.config.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.config.Timeout)
+		defer cancel()
+	}
+
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	}
+
+	result, err := s.client.GetObject(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download file from S3: %w", err)
+	}
+	defer result.Body.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read S3 object body: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }
