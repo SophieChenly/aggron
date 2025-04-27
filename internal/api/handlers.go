@@ -13,7 +13,6 @@ POST /upload
 Body (form-data)
 - file: <file>
 - discordID: <string>
-- allowedUser: <string>
 */
 func UploadFile(ctx *gin.Context) {
 	file, err := ctx.FormFile("file")
@@ -28,16 +27,9 @@ func UploadFile(ctx *gin.Context) {
 		return
 	}
 
-	allowedUser, exists := ctx.GetPostForm("allowedUser")
-	if !exists {
-		ctx.JSON(http.StatusBadRequest, "allowedUser is required")
-		return
-	}
-
 	// just testing here, can remove later
 	fmt.Println(file.Filename)
 	fmt.Println(discordID)
-	fmt.Println(allowedUser)
 
 	// TODO: Upload Logic (Encrypt file and upload to S3)
 
