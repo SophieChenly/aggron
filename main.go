@@ -42,7 +42,7 @@ func main() {
 
 	router.POST("/file", api.UploadFile)
 	router.GET("/file", api.RetrieveFile)
-	router.POST("/callback/auth", api.CallbackAuth)
+	router.POST("/auth/callback", api.CallbackAuth)
 
 	router.Run(":8080")
 }

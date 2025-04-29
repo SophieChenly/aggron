@@ -86,7 +86,7 @@ func RetrieveFile(ctx *gin.Context) {
 
 /*
 Description: Callback endpoint after authentication
-POST /callback/auth
+POST /auth/callback
 
 Body (Raw JSON):
 - code: <string>
