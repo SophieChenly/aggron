@@ -39,7 +39,10 @@ func main() {
 	// init handlers
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 24 // 8 Mib
-	router.POST("/upload", api.UploadFile)
+
+	router.POST("/file", api.UploadFile)
+	router.GET("/file", api.RetrieveFile)
+	router.POST("/callback/auth", api.CallbackAuth)
 
 	router.Run(":8080")
 }

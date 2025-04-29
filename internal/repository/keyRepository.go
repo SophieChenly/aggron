@@ -19,11 +19,12 @@ func NewKeyRepository(db *mongo.Database) *KeyRepository {
 	}
 }
 
-func (r *KeyRepository) CreateKey(ctx context.Context, discordID, encryptedKey, fileID string) (*models.Key, error) {
+func (r *KeyRepository) CreateKey(ctx context.Context, discordID, encryptedKey, fileID, receiverDiscordID string) (*models.Key, error) {
 	Key := models.Key{
-		DiscordID:    discordID,
-		EncryptedKey: encryptedKey,
-		FileID:       fileID,
+		DiscordID:         discordID,
+		EncryptedKey:      encryptedKey,
+		FileID:            fileID,
+		ReceiverDiscordID: receiverDiscordID,
 	}
 
 	_, err := r.collection.InsertOne(ctx, Key)
