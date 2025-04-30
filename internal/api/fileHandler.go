@@ -1,11 +1,16 @@
 package api
 
 import (
+	"aggron/internal/services"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+type FileController struct {
+	AuthService *services.Auth
+}
 
 /*
 Description: Upload File
@@ -19,7 +24,7 @@ Body (form-data):
 Response:
 - fileID: <string>
 */
-func UploadFile(ctx *gin.Context) {
+func (c *FileController) UploadFile(ctx *gin.Context) {
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, "file is required")
@@ -60,7 +65,7 @@ Query params:
 Response:
 - Downloads file
 */
-func RetrieveFile(ctx *gin.Context) {
+func (c *FileController) RetrieveFile(ctx *gin.Context) {
 	fileId, exists := ctx.GetQuery("fileID")
 	if !exists {
 		ctx.JSON(http.StatusBadRequest, "fileID is required")
@@ -79,22 +84,8 @@ func RetrieveFile(ctx *gin.Context) {
 	fmt.Println(senderDiscordID)
 	fmt.Println(receiverDiscordID)
 
+	// TODO: Auth logic: check if authenticated, if not then redirect to Passage auth
 	// TODO: Retrieve Logic (Decrypt file from S3 and check if receiver is authorized to see it)
 
 	ctx.Status(http.StatusCreated)
-}
-
-/*
-Description: Callback endpoint after authentication
-POST /auth/callback
-
-Body (Raw JSON):
-- code: <string>
-- token: <string>
-- state: <{originalURL, fileIdD, senderDiscordID, receiverDiscordID}>
-*/
-func CallbackAuth(ctx *gin.Context) {
-	// TODO: implement authentication verification + set session + redirect to GET /retrieve
-
-	ctx.Redirect(http.StatusPermanentRedirect, "/")
 }
