@@ -1,6 +1,8 @@
 package types
 
-type AuthInfo struct {
-	DiscordID string
+type StateInfo struct {
+	SenderDiscordID   string
+	ReceiverDiscordID string
+	FileID            string
+	State             string
 }
-
