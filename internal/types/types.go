@@ -6,3 +6,8 @@ type StateInfo struct {
 	FileID            string
 	State             string
 }
+
+type AuthInfo struct {
+	DiscordID string
+	State     string
+}
