@@ -2,6 +2,7 @@ package main
 
 import (
 	"aggron/internal/api"
+	"aggron/internal/cache"
 	"aggron/internal/config"
 	"aggron/internal/db"
 	"aggron/internal/repository"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/coreos/go-oidc"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -24,10 +26,10 @@ func main() {
 	}
 
 	// init repositories (database interfaces)
-	// user
+	// users
 	userRepo := repository.NewUserRepository(dbInstance)
 
-	// key
+	// keys
 	keyRepo := repository.NewKeyRepository(dbInstance)
 
 	// init services
@@ -54,6 +56,14 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
+	// redis (cache)
+	redisService := cache.NewRedis(*redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_ADDR"),
+		Password: "",
+		DB:       0,
+		Protocol: 2, // connection
+	}))
 
 	// init handlers
 	router := gin.Default()
