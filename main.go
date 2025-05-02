@@ -4,9 +4,11 @@ import (
 	"aggron/internal/api"
 	"aggron/internal/cache"
 	"aggron/internal/config"
+	"aggron/internal/crypto"
 	"aggron/internal/db"
 	"aggron/internal/repository"
 	"aggron/internal/services"
+	"fmt"
 	"log"
 	"os"
 
@@ -61,6 +63,26 @@ func main() {
 		DB:       0,
 		Protocol: 2, // connection
 	}))
+
+	// crypto
+	cryptoService := crypto.NewEncryptionService()
+
+	var plaintext []byte = []byte("Hello im gay")
+	var key, err = cryptoService.GenerateKey()
+
+	fmt.Printf("Key length: %d\n", len(key))
+
+	encryptedValue, err := cryptoService.Encrypt(plaintext, key)
+	if err != nil {
+		panic(err)
+	}
+
+	decryptedValue, err := cryptoService.Decrypt(encryptedValue, key)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Decrypted text: %s\n", decryptedValue)
 
 	// init handlers
 	router := gin.Default()

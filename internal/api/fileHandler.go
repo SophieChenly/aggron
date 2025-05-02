@@ -48,12 +48,8 @@ func (c *FileController) UploadFile(ctx *gin.Context) {
 	fmt.Println(receiverDiscordID)
 
 	// TODO: Upload Logic (Encrypt file and upload to S3 and store key + authorized userId)
+	// Encrypt file
 
-	// temporary -- remove later
-	tempFileId := "file.pdf"
-
-	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", tempFileId))
-	ctx.Header("Content-Type", "application/pdf")
 	ctx.Status(http.StatusCreated)
 }
 
