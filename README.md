@@ -6,6 +6,7 @@
 ## Description
 - This is a discord bot that encrypts files sent by users and also bypasses file size limits. 
 - Built with Go, AWS, Discord API, and Passage by 1Password (auth).
+- Encrypted with AES-256-GCM, encryption keys managed by AWS KMS.
 
 ## Setup and Run
 Install Go: https://go.dev/doc/install
