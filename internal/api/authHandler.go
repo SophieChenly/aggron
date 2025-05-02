@@ -2,7 +2,6 @@ package api
 
 import (
 	"aggron/internal/cache"
-	"aggron/internal/repository"
 	"aggron/internal/services"
 	"aggron/internal/types"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 type AuthController struct {
 	AuthService  *services.Auth
 	RedisService *cache.Redis
-	UserRepo     *repository.UserRepository
 }
 
 /*
