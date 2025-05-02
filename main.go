@@ -29,9 +29,6 @@ func main() {
 	// users
 	userRepo := repository.NewUserRepository(dbInstance)
 
-	// keys
-	keyRepo := repository.NewKeyRepository(dbInstance)
-
 	// init services
 	// s3
 	s3Service, err := services.NewS3(services.S3Config{
@@ -69,8 +66,8 @@ func main() {
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 24 // 8 Mib
 
-	fileHandler := api.FileController{AuthService: authService}
-	authHandler := api.AuthController{}
+	fileHandler := api.FileController{AuthService: authService, RedisService: redisService}
+	authHandler := api.AuthController{AuthService: authService, RedisService: redisService}
 
 	router.POST("/file", fileHandler.UploadFile)
 	router.GET("/file", fileHandler.RetrieveFile)

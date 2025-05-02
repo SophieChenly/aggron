@@ -1,15 +1,19 @@
 package api
 
 import (
+	"aggron/internal/cache"
 	"aggron/internal/services"
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
 )
 
 type FileController struct {
-	AuthService *services.Auth
+	AuthService  *services.Auth
+	RedisService *cache.Redis
 }
 
 /*
@@ -61,9 +65,10 @@ Query params:
 - fileID: <string>
 - senderDiscordID: <string>
 - receiverDiscordID: <string>
+- state: <string>
 
 Response:
-- Downloads file
+- <file>
 */
 func (c *FileController) RetrieveFile(ctx *gin.Context) {
 	fileId, exists := ctx.GetQuery("fileID")
@@ -78,14 +83,27 @@ func (c *FileController) RetrieveFile(ctx *gin.Context) {
 		return
 	}
 
+	state, exists := ctx.GetQuery("state")
+	if !exists {
+		ctx.JSON(http.StatusBadRequest, "state is required")
+		return
+	}
+
 	receiverDiscordID := ctx.Query("receiverDiscordID")
 
-	fmt.Println(fileId)
-	fmt.Println(senderDiscordID)
-	fmt.Println(receiverDiscordID)
+	// check if authenticated, if not then redirect to auth url
+	isAuthenticated, err := c.RedisService.Exists(context.TODO(), receiverDiscordID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to verify existence of cached object")
+		return
+	}
 
-	// TODO: Auth logic: check if authenticated, if not then redirect to Passage auth
+	if !isAuthenticated {
+		authorizeURL := c.AuthService.Authorize(state, oauth2.AccessTypeOnline)
+		ctx.Redirect(http.StatusFound, authorizeURL)
+	}
+
 	// TODO: Retrieve Logic (Decrypt file from S3 and check if receiver is authorized to see it)
 
-	ctx.Status(http.StatusCreated)
+	ctx.Status(http.StatusOK)
 }

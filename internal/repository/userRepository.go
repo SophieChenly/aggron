@@ -21,15 +21,15 @@ func NewUserRepository(db *mongo.Database) *UserRepository {
 	}
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, discordID, passageID string) (*models.User, error) {
+func (r *UserRepository) CreateUser(ctx context.Context, discordID, email string) (*models.User, error) {
 	existingUser, _ := r.FindByDiscordID(ctx, discordID)
 	if existingUser == nil {
-		return nil, errors.New("user with this Discord ID already exists")
+		return nil, errors.New("user with this Discord ID and email already exists")
 	}
 
 	user := models.User{
 		DiscordID: discordID,
-		PassageID: passageID,
+		Email:     email,
 	}
 
 	_, err := r.collection.InsertOne(ctx, user)
@@ -40,7 +40,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, discordID, passageID st
 	return &user, nil
 }
 
-func (r *UserRepository) UpdatePassageID(ctx context.Context, discordID, newPassageID string) (*models.User, error) {
+func (r *UserRepository) UpdatePassageID(ctx context.Context, discordID, newEmail string) (*models.User, error) {
 	_, err := r.FindByDiscordID(ctx, discordID)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (r *UserRepository) UpdatePassageID(ctx context.Context, discordID, newPass
 	filter := bson.M{"discord_id": discordID}
 	update := bson.M{
 		"$set": bson.M{
-			"passage_id": newPassageID,
+			"email": newEmail,
 		},
 	}
 
