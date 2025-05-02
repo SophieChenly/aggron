@@ -2,7 +2,8 @@ package services
 
 import (
 	"context"
-	"fmt"
+	"crypto/rand"
+	"encoding/hex"
 	"log"
 
 	"github.com/coreos/go-oidc"
@@ -22,7 +23,7 @@ type AuthService interface {
 }
 
 type Auth struct {
-	config oauth2.Config
+	Config oauth2.Config
 }
 
 func NewAuth(config AuthConfig) (*Auth, error) {
@@ -41,17 +42,23 @@ func NewAuth(config AuthConfig) (*Auth, error) {
 	}
 
 	return &Auth{
-		config: oauth2Config,
+		Config: oauth2Config,
 	}, nil
 }
 
 func (a *Auth) Authorize(state string, authCodeOpt oauth2.AuthCodeOption) string {
-	url := a.config.AuthCodeURL(a.generateState(), authCodeOpt)
-	fmt.Println(url)
+	url := a.Config.AuthCodeURL(state, authCodeOpt)
 
 	return url
 }
 
-func (a *Auth) generateState() string {
-	return "state"
+func (a *Auth) GenerateState() (string, error) {
+	b := make([]byte, 32)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(b), nil
 }

@@ -16,6 +16,8 @@ type RedisService interface {
 	Exists(ctx context.Context, key string) (bool, error)
 }
 
+var DefaultExpirationTime time.Duration = time.Minute * 1
+
 type Redis struct {
 	client redis.Client
 }
