@@ -40,7 +40,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, discordID, email string
 	return &user, nil
 }
 
-func (r *UserRepository) UpdatePassageID(ctx context.Context, discordID, newEmail string) (*models.User, error) {
+func (r *UserRepository) UpdateEmail(ctx context.Context, discordID, newEmail string) (*models.User, error) {
 	_, err := r.FindByDiscordID(ctx, discordID)
 	if err != nil {
 		return nil, err
