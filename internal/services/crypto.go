@@ -1,9 +1,10 @@
-package crypto
+package services
 
 import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"io"
 )
@@ -14,7 +15,7 @@ type EncryptionService struct {
 
 func NewEncryptionService() *EncryptionService {
 	return &EncryptionService{
-		keySize: 16, // AES-128
+		keySize: 32, // AES-256
 	}
 }
 
@@ -72,4 +73,14 @@ func (s *EncryptionService) Decrypt(ciphertext []byte, key []byte) ([]byte, erro
 	var nonce, text = ciphertext[:nonceSize], ciphertext[nonceSize:]
 
 	return aesgcm.Open(nil, nonce, text, nil)
+}
+
+func (s *EncryptionService) GenerateFileHash(data []byte) []byte {
+	hash := sha256.Sum256(data)
+	return hash[:]
+}
+
+func (s *EncryptionService) ValidateFileHash(data []byte, expectedHash []byte) bool {
+	hash := sha256.Sum256(data)
+	return string(hash[:]) == string(expectedHash)
 }
