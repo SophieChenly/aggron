@@ -2,23 +2,53 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 )
+
+type KMSConfig struct {
+	Region          string
+	AccessKeyID     string
+	SecretAccessKey string
+	Timeout         time.Duration
+}
 
 type KMSKeyService struct {
 	client *kms.Client
 	keyID  string
 }
 
-func NewKMSKeyService(cfg aws.Config, keyID string) *KMSKeyService {
+func NewKMSKeyService(config KMSConfig, keyID string) (*KMSKeyService, error) {
+	if config.Timeout == 0 {
+		config.Timeout = 30 * time.Second
+	}
+
+	creds := credentials.NewStaticCredentialsProvider(
+		config.AccessKeyID,
+		config.SecretAccessKey,
+		"", // optional session token
+	)
+
+	cfg, err := awsconfig.LoadDefaultConfig(
+		context.Background(),
+		awsconfig.WithRegion(config.Region),
+		awsconfig.WithCredentialsProvider(creds),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
 	client := kms.NewFromConfig(cfg)
 	return &KMSKeyService{
 		client: client,
 		keyID:  keyID,
-	}
+	}, nil
 }
 
 func (s *KMSKeyService) GenerateDataKey(ctx context.Context) ([]byte, []byte, error) {

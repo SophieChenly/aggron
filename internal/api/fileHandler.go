@@ -3,8 +3,10 @@ package api
 import (
 	"aggron/internal/cache"
 	"aggron/internal/services"
+	"aggron/internal/utils"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +14,10 @@ import (
 )
 
 type FileController struct {
-	AuthService  *services.Auth
-	RedisService *cache.Redis
+	AuthService      *services.Auth
+	RedisService     *cache.Redis
+	EncryptorService *services.FileEncryptionService
+	S3Service        *services.S3
 }
 
 /*
@@ -47,9 +51,46 @@ func (c *FileController) UploadFile(ctx *gin.Context) {
 	fmt.Println(senderDiscordID)
 	fmt.Println(receiverDiscordID)
 
-	// TODO: Upload Logic (Encrypt file and upload to S3 and store key + authorized userId)
-	// Encrypt file
+	fileID, err := utils.GenerateId()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to generate fileID")
+		return
+	}
 
+	// Encrypt file
+	openedFile, err := file.Open()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to open file")
+		return
+	}
+	defer openedFile.Close()
+
+	plaintext, err := io.ReadAll(openedFile)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to parse file to plaintext")
+		return
+	}
+
+	cryptText, err := c.EncryptorService.EncryptFile(ctx, fileID, plaintext, senderDiscordID, receiverDiscordID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to encrypt file")
+		return
+	}
+
+	_, err = c.S3Service.UploadFile(ctx, fileID, cryptText, "application/octet-stream")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to upload crypttext")
+		return
+	}
+
+	res, err := c.EncryptorService.DecryptFile(ctx, fileID, cryptText, receiverDiscordID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to encrypt file")
+		return
+	}
+
+	fmt.Println("decrypted")
+	fmt.Println(res)
 	ctx.Status(http.StatusCreated)
 }
 

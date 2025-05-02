@@ -4,11 +4,9 @@ import (
 	"aggron/internal/api"
 	"aggron/internal/cache"
 	"aggron/internal/config"
-	"aggron/internal/crypto"
 	"aggron/internal/db"
 	"aggron/internal/repository"
 	"aggron/internal/services"
-	"fmt"
 	"log"
 	"os"
 
@@ -37,6 +35,7 @@ func main() {
 		Region:          os.Getenv("AWS_REGION"),
 		AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
 		SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
+		Bucket:          os.Getenv("AWS_BUCKET_NAME"),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -65,30 +64,27 @@ func main() {
 	}))
 
 	// crypto
-	cryptoService := crypto.NewEncryptionService()
+	// cryptoService := services.NewEncryptionService()
+	// kmsService, err := services.NewKMSKeyService(services.KMSConfig{
+	// 	Region:          os.Getenv("AWS_REGION"),
+	// 	AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+	// 	SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
+	// 	Bucket:          os.Getenv("AWS_BUCKET_NAME"),
+	// })
 
-	var plaintext []byte = []byte("Hello im gay")
-	var key, err = cryptoService.GenerateKey()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
+	// keyStoreService := services.NewKeyStoreService(redisService)
 
-	fmt.Printf("Key length: %d\n", len(key))
-
-	encryptedValue, err := cryptoService.Encrypt(plaintext, key)
-	if err != nil {
-		panic(err)
-	}
-
-	decryptedValue, err := cryptoService.Decrypt(encryptedValue, key)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Decrypted text: %s\n", decryptedValue)
+	// encryptorService := services.NewFileEncryptionService(cryptoService, kmsService, keyStoreService)
 
 	// init handlers
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 24 // 8 Mib
 
-	fileHandler := api.FileController{AuthService: authService, RedisService: redisService}
+	fileHandler := api.FileController{AuthService: authService, RedisService: redisService, S3Service: s3Service}
 	authHandler := api.AuthController{AuthService: authService, RedisService: redisService}
 
 	router.POST("/file", fileHandler.UploadFile)

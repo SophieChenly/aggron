@@ -16,20 +16,13 @@ type FileKey struct {
 type FileEncryptionService struct {
 	encryptionService *EncryptionService
 	kmsService        *KMSKeyService
-	keyStore          KeyStoreInterface 
-}
-
-// methods for storing and retrieving encryption keys
-type KeyStoreInterface interface {
-	StoreFileKey(ctx context.Context, fileKey FileKey) error
-	GetFileKey(ctx context.Context, fileID string) (FileKey, error)
-	// TODO: Additional methods like ListFileKeys, DeleteFileKey, etc.
+	keyStore          KeyStoreService
 }
 
 func NewFileEncryptionService(
 	encryptionService *EncryptionService,
 	kmsService *KMSKeyService,
-	keyStore KeyStoreInterface,
+	keyStore KeyStoreService,
 ) *FileEncryptionService {
 	return &FileEncryptionService{
 		encryptionService: encryptionService,
@@ -68,7 +61,7 @@ func (s *FileEncryptionService) EncryptFile(
 		ReceiverDiscordID: receiverDiscordID,
 	}
 
-	if err := s.keyStore.StoreFileKey(ctx, fileKey); err != nil {
+	if err := s.keyStore.StoreFileKey(fileKey); err != nil {
 		return nil, err
 	}
 
@@ -82,7 +75,7 @@ func (s *FileEncryptionService) DecryptFile(
 	userDiscordID string,
 ) ([]byte, error) {
 
-	fileKey, err := s.keyStore.GetFileKey(ctx, fileID)
+	fileKey, err := s.keyStore.GetFileKey(fileID)
 	if err != nil {
 		return nil, errors.New("file key not found")
 	}

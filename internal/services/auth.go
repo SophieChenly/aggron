@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"log"
 
 	"github.com/coreos/go-oidc"
@@ -50,15 +48,4 @@ func (a *Auth) Authorize(state string, authCodeOpt oauth2.AuthCodeOption) string
 	url := a.Config.AuthCodeURL(state, authCodeOpt)
 
 	return url
-}
-
-func (a *Auth) GenerateState() (string, error) {
-	b := make([]byte, 32)
-
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(b), nil
 }
