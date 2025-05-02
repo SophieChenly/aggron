@@ -44,12 +44,8 @@ func (c *FileController) UploadFile(ctx *gin.Context) {
 	fmt.Println(receiverDiscordID)
 
 	// TODO: Upload Logic (Encrypt file and upload to S3 and store key + authorized userId)
+	// Encrypt file
 
-	// temporary -- remove later
-	tempFileId := "file.pdf"
-
-	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", tempFileId))
-	ctx.Header("Content-Type", "application/pdf")
 	ctx.Status(http.StatusCreated)
 }
 
@@ -86,6 +82,13 @@ func (c *FileController) RetrieveFile(ctx *gin.Context) {
 
 	// TODO: Auth logic: check if authenticated, if not then redirect to Passage auth
 	// TODO: Retrieve Logic (Decrypt file from S3 and check if receiver is authorized to see it)
+
+	// temporary -- remove later
+	tempFileId := "file.pdf"
+
+	// forces you to download file when you click on the link
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", tempFileId))
+	ctx.Header("Content-Type", "application/pdf")
 
 	ctx.Status(http.StatusCreated)
 }

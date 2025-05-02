@@ -1,5 +1,8 @@
 package services
 
+// Manages uploading, deleting, and downloading files from the S3 bucket
+// Files must be previously encrypted, and downloaded files will be encrypted
+
 import (
 	"bytes"
 	"context"
@@ -63,6 +66,7 @@ func NewS3(config S3Config) (*S3, error) {
 	}, nil
 }
 
+// Passed files must be the encrypted version
 func (s *S3) UploadFile(ctx context.Context, key string, content []byte, contentType string) (string, error) {
 	if s.config.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -108,6 +112,7 @@ func (s *S3) DeleteFile(ctx context.Context, key string) error {
 	return nil
 }
 
+// Returned files will be the encrypted version
 func (s *S3) DownloadFile(ctx context.Context, key string) ([]byte, error) {
 	if s.config.Timeout > 0 {
 		var cancel context.CancelFunc
