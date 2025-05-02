@@ -9,6 +9,7 @@
 
 ## Setup and Run
 Install Go: https://go.dev/doc/install
+Setup MongoDB: https://www.mongodb.com/docs/manual/installation/
 
 1. `go mod download`
 2. `docker pull redis`
