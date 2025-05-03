@@ -16,13 +16,13 @@ type FileKey struct {
 type FileEncryptionService struct {
 	encryptionService *EncryptionService
 	kmsService        *KMSKeyService
-	keyStore          KeyStoreService
+	keyStore          *KeyStoreService
 }
 
 func NewFileEncryptionService(
 	encryptionService *EncryptionService,
 	kmsService *KMSKeyService,
-	keyStore KeyStoreService,
+	keyStore *KeyStoreService,
 ) *FileEncryptionService {
 	return &FileEncryptionService{
 		encryptionService: encryptionService,
@@ -42,7 +42,8 @@ func (s *FileEncryptionService) EncryptFile(
 	// checksum
 	fileHash := s.encryptionService.GenerateFileHash(fileData)
 
-	plaintextKey, encryptedKey, err := s.kmsService.GenerateDataKey(ctx)
+	// TODO: fileID may not be the actual keyID we are supposed to be passing into kms
+	plaintextKey, encryptedKey, err := s.kmsService.GenerateDataKey(ctx, fileID)
 	if err != nil {
 		return nil, err
 	}
