@@ -64,27 +64,26 @@ func main() {
 	}))
 
 	// crypto
-	// cryptoService := services.NewEncryptionService()
-	// kmsService, err := services.NewKMSKeyService(services.KMSConfig{
-	// 	Region:          os.Getenv("AWS_REGION"),
-	// 	AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
-	// 	SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
-	// 	Bucket:          os.Getenv("AWS_BUCKET_NAME"),
-	// })
+	cryptoService := services.NewEncryptionService()
+	kmsService, err := services.NewKMSKeyService(services.KMSConfig{
+		Region:          os.Getenv("AWS_REGION"),
+		AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+		SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
+	})
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
-	// keyStoreService := services.NewKeyStoreService(redisService)
+	keyStoreService := services.NewKeyStoreService(redisService)
 
-	// encryptorService := services.NewFileEncryptionService(cryptoService, kmsService, keyStoreService)
+	fileEncryptorService := services.NewFileEncryptionService(cryptoService, kmsService, keyStoreService)
 
 	// init handlers
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 24 // 8 Mib
 
-	fileHandler := api.FileController{AuthService: authService, RedisService: redisService, S3Service: s3Service}
+	fileHandler := api.FileController{AuthService: authService, RedisService: redisService, S3Service: s3Service, EncryptorService: fileEncryptorService}
 	authHandler := api.AuthController{AuthService: authService, RedisService: redisService}
 
 	router.POST("/file", fileHandler.UploadFile)
