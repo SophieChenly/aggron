@@ -42,8 +42,7 @@ func (s *FileEncryptionService) EncryptFile(
 	// checksum
 	fileHash := s.encryptionService.GenerateFileHash(fileData)
 
-	// TODO: fileID may not be the actual keyID we are supposed to be passing into kms
-	plaintextKey, encryptedKey, err := s.kmsService.GenerateDataKey(ctx, fileID)
+	plaintextKey, encryptedKey, err := s.kmsService.GenerateDataKey(ctx)
 	if err != nil {
 		return nil, err
 	}

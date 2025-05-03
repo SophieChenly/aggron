@@ -69,7 +69,7 @@ func main() {
 		Region:          os.Getenv("AWS_REGION"),
 		AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
 		SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
-	})
+	}, os.Getenv("AWS_KMS_KEY_ID"))
 	if err != nil {
 		log.Fatal(err)
 		return

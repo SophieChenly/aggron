@@ -21,9 +21,10 @@ type KMSConfig struct {
 
 type KMSKeyService struct {
 	client *kms.Client
+	keyId  string
 }
 
-func NewKMSKeyService(config KMSConfig) (*KMSKeyService, error) {
+func NewKMSKeyService(config KMSConfig, keyId string) (*KMSKeyService, error) {
 	if config.Timeout == 0 {
 		config.Timeout = 30 * time.Second
 	}
@@ -46,12 +47,13 @@ func NewKMSKeyService(config KMSConfig) (*KMSKeyService, error) {
 	client := kms.NewFromConfig(cfg)
 	return &KMSKeyService{
 		client: client,
+		keyId:  keyId,
 	}, nil
 }
 
-func (s *KMSKeyService) GenerateDataKey(ctx context.Context, keyID string) ([]byte, []byte, error) {
+func (s *KMSKeyService) GenerateDataKey(ctx context.Context) ([]byte, []byte, error) {
 	input := &kms.GenerateDataKeyInput{
-		KeyId:   aws.String(keyID),
+		KeyId:   aws.String(s.keyId),
 		KeySpec: types.DataKeySpecAes256,
 	}
 
@@ -76,10 +78,10 @@ func (s *KMSKeyService) DecryptDataKey(ctx context.Context, encryptedKey []byte)
 	return result.Plaintext, nil
 }
 
-func (s *KMSKeyService) ReEncryptDataKey(ctx context.Context, encryptedKey []byte, sourceKeyId, destinationKeyID string) ([]byte, error) {
+func (s *KMSKeyService) ReEncryptDataKey(ctx context.Context, encryptedKey []byte, destinationKeyID string) ([]byte, error) {
 	input := &kms.ReEncryptInput{
 		CiphertextBlob:   encryptedKey,
-		SourceKeyId:      aws.String(sourceKeyId),
+		SourceKeyId:      aws.String(s.keyId),
 		DestinationKeyId: aws.String(destinationKeyID),
 	}
 
