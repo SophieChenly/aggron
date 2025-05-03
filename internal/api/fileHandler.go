@@ -47,10 +47,6 @@ func (c *FileController) UploadFile(ctx *gin.Context) {
 
 	receiverDiscordID := ctx.PostForm("receiverDiscordID")
 
-	fmt.Println(file.Filename)
-	fmt.Println(senderDiscordID)
-	fmt.Println(receiverDiscordID)
-
 	fileID, err := utils.GenerateId()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, "failed to generate fileID")
@@ -83,14 +79,6 @@ func (c *FileController) UploadFile(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.EncryptorService.DecryptFile(ctx, fileID, cryptText, receiverDiscordID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, "failed to encrypt file")
-		return
-	}
-
-	fmt.Println("decrypted")
-	fmt.Println(res)
 	ctx.Status(http.StatusCreated)
 }
 
@@ -119,6 +107,8 @@ func (c *FileController) RetrieveFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, "discordID is required")
 		return
 	}
+	fmt.Println(fileId)
+	fmt.Println(senderDiscordID)
 
 	state, exists := ctx.GetQuery("state")
 	if !exists {
