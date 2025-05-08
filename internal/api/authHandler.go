@@ -94,7 +94,7 @@ func (c *AuthController) AuthCallback(ctx *gin.Context) {
 	}
 
 	// set auth state for user who just logged in
-	err = cache.SetObjTyped(c.RedisService, ctx, cacheKey, authInfo, cache.DefaultExpirationTime)
+	err = cache.SetObjTyped(c.RedisService, ctx, cacheKey, authInfo, types.DefaultExpirationTime)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, "failed to set auth info")
 		return

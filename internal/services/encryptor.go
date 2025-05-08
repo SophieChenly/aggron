@@ -1,8 +1,12 @@
 package services
 
 import (
+	"aggron/internal/db/models"
+	"aggron/internal/repository"
 	"context"
 	"errors"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FileKey struct {
@@ -16,18 +20,18 @@ type FileKey struct {
 type FileEncryptionService struct {
 	encryptionService *EncryptionService
 	kmsService        *KMSKeyService
-	keyStore          *KeyStoreService
+	fileKeyRepo       *repository.FileKeyRepository
 }
 
 func NewFileEncryptionService(
 	encryptionService *EncryptionService,
 	kmsService *KMSKeyService,
-	keyStore *KeyStoreService,
+	fileKeyRepo *repository.FileKeyRepository,
 ) *FileEncryptionService {
 	return &FileEncryptionService{
 		encryptionService: encryptionService,
 		kmsService:        kmsService,
-		keyStore:          keyStore,
+		fileKeyRepo:       fileKeyRepo,
 	}
 }
 
@@ -53,15 +57,16 @@ func (s *FileEncryptionService) EncryptFile(
 		return nil, err
 	}
 
-	fileKey := FileKey{
+	fileKey := models.FileKey{
 		FileID:            fileID,
-		EncryptedKey:      encryptedKey,
-		FileHash:          fileHash,
+		EncryptedKey:      primitive.Binary{Data: encryptedKey},
+		FileHash:          primitive.Binary{Data: fileHash},
 		SenderDiscordID:   senderDiscordID,
 		ReceiverDiscordID: receiverDiscordID,
 	}
 
-	if err := s.keyStore.StoreFileKey(fileKey); err != nil {
+	_, err = s.fileKeyRepo.CreateFileKey(ctx, fileKey)
+	if err != nil {
 		return nil, err
 	}
 
@@ -75,7 +80,7 @@ func (s *FileEncryptionService) DecryptFile(
 	userDiscordID string,
 ) ([]byte, error) {
 
-	fileKey, err := s.keyStore.GetFileKey(fileID)
+	fileKey, err := s.fileKeyRepo.FindByFileID(ctx, fileID)
 	if err != nil {
 		return nil, errors.New("file key not found")
 	}
@@ -84,7 +89,7 @@ func (s *FileEncryptionService) DecryptFile(
 		return nil, errors.New("user does not have permission to access this file")
 	}
 
-	plaintextKey, err := s.kmsService.DecryptDataKey(ctx, fileKey.EncryptedKey)
+	plaintextKey, err := s.kmsService.DecryptDataKey(ctx, fileKey.EncryptedKey.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +100,7 @@ func (s *FileEncryptionService) DecryptFile(
 		return nil, err
 	}
 
-	if !s.encryptionService.ValidateFileHash(decryptedData, fileKey.FileHash) {
+	if !s.encryptionService.ValidateFileHash(decryptedData, fileKey.FileHash.Data) {
 		return nil, errors.New("file integrity verification failed")
 	}
 

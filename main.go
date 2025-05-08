@@ -29,6 +29,9 @@ func main() {
 	// users
 	userRepo := repository.NewUserRepository(dbInstance)
 
+	// filekey
+	fileKeyRepo := repository.NewFileKeyRepository(dbInstance)
+
 	// init services
 	// s3
 	s3Service, err := services.NewS3(services.S3Config{
@@ -75,20 +78,27 @@ func main() {
 		return
 	}
 
-	keyStoreService := services.NewKeyStoreService(redisService)
-
-	fileEncryptorService := services.NewFileEncryptionService(cryptoService, kmsService, keyStoreService)
+	fileEncryptorService := services.NewFileEncryptionService(cryptoService, kmsService, fileKeyRepo)
 
 	// init handlers
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 24 // 8 Mib
 
-	fileHandler := api.FileController{AuthService: authService, RedisService: redisService, S3Service: s3Service, EncryptorService: fileEncryptorService}
+	fileHandler := api.FileController{
+		AuthService:      authService,
+		RedisService:     redisService,
+		S3Service:        s3Service,
+		EncryptorService: fileEncryptorService,
+		UserRepository:   userRepo,
+	}
 	authHandler := api.AuthController{AuthService: authService, RedisService: redisService}
+	registrationHandler := api.RegistrationController{UserRepository: userRepo}
 
+	// init routes
 	router.POST("/file", fileHandler.UploadFile)
 	router.GET("/file", fileHandler.RetrieveFile)
 	router.GET("/auth/callback", authHandler.AuthCallback)
+	router.POST("/register", registrationHandler.RegisterUser)
 
 	router.Run(":8080")
 }
