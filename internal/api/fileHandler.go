@@ -2,9 +2,10 @@ package api
 
 import (
 	"aggron/internal/cache"
+	"aggron/internal/repository"
 	"aggron/internal/services"
+	"aggron/internal/types"
 	"aggron/internal/utils"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,7 @@ type FileController struct {
 	RedisService     *cache.Redis
 	EncryptorService *services.FileEncryptionService
 	S3Service        *services.S3
+	UserRepository   *repository.UserRepository
 }
 
 /*
@@ -79,7 +81,33 @@ func (c *FileController) UploadFile(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Status(http.StatusCreated)
+	sender, err := c.UserRepository.FindByDiscordID(ctx, senderDiscordID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to get sender email")
+		return
+	}
+
+	receiver, err := c.UserRepository.FindByDiscordID(ctx, receiverDiscordID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to get receiver email")
+		return
+	}
+
+	state := types.StateInfo{
+		SenderDiscordID:   senderDiscordID,
+		SenderEmail:       sender.Email,
+		ReceiverDiscordID: receiverDiscordID,
+		ReceiverEmail:     receiver.Email,
+		FileID:            fileID,
+	}
+
+	err = cache.SetObjTyped(c.RedisService, ctx, fileID, state, types.DefaultExpirationTime)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to set state")
+		return
+	}
+
+	ctx.String(http.StatusCreated, fileID)
 }
 
 /*
@@ -88,9 +116,7 @@ GET /file
 
 Query params:
 - fileID: <string>
-- senderDiscordID: <string>
 - receiverDiscordID: <string>
-- state: <string>
 
 Response:
 - <file>
@@ -102,35 +128,37 @@ func (c *FileController) RetrieveFile(ctx *gin.Context) {
 		return
 	}
 
-	senderDiscordID, exists := ctx.GetQuery("senderDiscordID")
-	if !exists {
-		ctx.JSON(http.StatusBadRequest, "discordID is required")
-		return
-	}
-	fmt.Println(fileId)
-	fmt.Println(senderDiscordID)
-
-	state, exists := ctx.GetQuery("state")
-	if !exists {
-		ctx.JSON(http.StatusBadRequest, "state is required")
-		return
-	}
-
 	receiverDiscordID := ctx.Query("receiverDiscordID")
 
 	// check if authenticated, if not then redirect to auth url
-	isAuthenticated, err := c.RedisService.Exists(context.TODO(), receiverDiscordID)
+	isAuthenticated, err := c.RedisService.Exists(ctx, receiverDiscordID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, "failed to verify existence of cached object")
 		return
 	}
 
 	if !isAuthenticated {
-		authorizeURL := c.AuthService.Authorize(state, oauth2.AccessTypeOnline)
+		authorizeURL := c.AuthService.Authorize(fileId, oauth2.AccessTypeOnline)
 		ctx.Redirect(http.StatusFound, authorizeURL)
 	}
 
-	// TODO: Retrieve Logic (Decrypt file from S3 and check if receiver is authorized to see it)
+	encryptedData, err := c.S3Service.DownloadFile(ctx, fileId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to download file from storage")
+		return
+	}
 
-	ctx.Status(http.StatusOK)
+	decryptedData, err := c.EncryptorService.DecryptFile(ctx, fileId, encryptedData, receiverDiscordID)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, "failed to decrypt file: "+err.Error())
+		return
+	}
+
+	ftype := utils.GetFileType(decryptedData)
+	file := fmt.Sprintf("%s.%s", fileId, ftype)
+
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", file))
+	ctx.Header("Content-Type", "application/octet-stream")
+
+	ctx.Data(http.StatusOK, "application/octet-stream", decryptedData)
 }

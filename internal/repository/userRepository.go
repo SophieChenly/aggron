@@ -4,7 +4,6 @@ import (
 	"aggron/internal/db/models"
 	"context"
 	"errors"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -23,7 +22,7 @@ func NewUserRepository(db *mongo.Database) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, discordID, email string) (*models.User, error) {
 	existingUser, _ := r.FindByDiscordID(ctx, discordID)
-	if existingUser == nil {
+	if existingUser != nil {
 		return nil, errors.New("user with this Discord ID and email already exists")
 	}
 
@@ -71,7 +70,9 @@ func (r *UserRepository) FindByDiscordID(ctx context.Context, discordID string) 
 
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
-		fmt.Print(err)
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
 		return nil, err
 	}
 

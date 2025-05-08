@@ -16,8 +16,6 @@ type RedisService interface {
 	Exists(ctx context.Context, key string) (bool, error)
 }
 
-var DefaultExpirationTime time.Duration = time.Minute * 1
-
 type Redis struct {
 	client redis.Client
 }
@@ -96,4 +94,18 @@ func (r *Redis) Exists(ctx context.Context, key string) (bool, error) {
 		return false, err
 	}
 	return result > 0, nil
+}
+
+// debugging method
+func GetAllKeys(r *Redis, ctx context.Context, pattern string) ([]string, error) {
+	if pattern == "" {
+		pattern = "*"
+	}
+
+	cmd := r.client.Keys(ctx, pattern)
+	if cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+
+	return cmd.Val(), nil
 }
