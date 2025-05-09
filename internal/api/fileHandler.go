@@ -130,6 +130,17 @@ func (c *FileController) RetrieveFile(ctx *gin.Context) {
 
 	receiverDiscordID := ctx.Query("receiverDiscordID")
 
+	stateInfo, err := cache.GetObjTyped[types.StateInfo](c.RedisService, ctx, fileId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, "failed to fetch state")
+		return
+	}
+
+	if stateInfo.ReceiverDiscordID != receiverDiscordID && receiverDiscordID != "" {
+		ctx.JSON(http.StatusUnauthorized, "user is not authorized to receive this resource")
+		return
+	}
+
 	// check if authenticated, if not then redirect to auth url
 	isAuthenticated, err := c.RedisService.Exists(ctx, receiverDiscordID)
 	if err != nil {
@@ -150,7 +161,7 @@ func (c *FileController) RetrieveFile(ctx *gin.Context) {
 
 	decryptedData, err := c.EncryptorService.DecryptFile(ctx, fileId, encryptedData, receiverDiscordID)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, "failed to decrypt file: "+err.Error())
+		ctx.JSON(http.StatusUnauthorized, "failed to decrypt file")
 		return
 	}
 

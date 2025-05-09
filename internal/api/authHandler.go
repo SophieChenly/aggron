@@ -4,6 +4,7 @@ import (
 	"aggron/internal/cache"
 	"aggron/internal/services"
 	"aggron/internal/types"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -69,29 +70,32 @@ func (c *AuthController) AuthCallback(ctx *gin.Context) {
 	var cacheKey string
 	var redirectPath string
 
-	if stateInfo.SenderEmail == email {
-		authInfo = types.AuthInfo{
-			DiscordID: stateInfo.SenderDiscordID,
-			Email:     email,
-		}
+	// TODO: create different workflow for authenticating sender
+	// if stateInfo.SenderEmail == email {
+	// 	authInfo = types.AuthInfo{
+	// 		DiscordID: stateInfo.SenderDiscordID,
+	// 		Email:     email,
+	// 	}
 
-		cacheKey = stateInfo.SenderDiscordID
-		redirectPath = "/upload"
-	} else {
-		// authorization
-		if email != stateInfo.ReceiverEmail {
-			ctx.JSON(http.StatusUnauthorized, "user is not permitted to received this resource")
-			return
-		}
+	// 	cacheKey = stateInfo.SenderDiscordID
 
-		authInfo = types.AuthInfo{
-			DiscordID: stateInfo.ReceiverDiscordID,
-			Email:     email,
-		}
+	// 	redirectPath = "/upload"
+	// } else {
 
-		cacheKey = stateInfo.ReceiverDiscordID
-		redirectPath = "/file"
+	// authorization
+	if email != stateInfo.ReceiverEmail || email != stateInfo.SenderEmail {
+		ctx.JSON(http.StatusUnauthorized, "user is not permitted to received this resource")
+		return
 	}
+
+	authInfo = types.AuthInfo{
+		DiscordID: stateInfo.ReceiverDiscordID,
+		Email:     email,
+	}
+
+	cacheKey = stateInfo.ReceiverDiscordID
+	redirectPath = fmt.Sprintf("/file?fileID=%s&receiverDiscordID=%s", stateInfo.FileID, stateInfo.ReceiverDiscordID)
+	// }
 
 	// set auth state for user who just logged in
 	err = cache.SetObjTyped(c.RedisService, ctx, cacheKey, authInfo, types.DefaultExpirationTime)
