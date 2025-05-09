@@ -7,6 +7,7 @@ import (
 	"aggron/internal/db"
 	"aggron/internal/repository"
 	"aggron/internal/services"
+	"context"
 	"log"
 	"os"
 
@@ -31,6 +32,7 @@ func main() {
 
 	// filekey
 	fileKeyRepo := repository.NewFileKeyRepository(dbInstance)
+	fileKeyRepo.CreateIndexes(context.Background())
 
 	// init services
 	// s3

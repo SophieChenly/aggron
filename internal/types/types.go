@@ -15,4 +15,4 @@ type AuthInfo struct {
 	Email     string
 }
 
-var DefaultExpirationTime time.Duration = time.Minute * 15
+var DefaultExpirationTime time.Duration = time.Minute * 30

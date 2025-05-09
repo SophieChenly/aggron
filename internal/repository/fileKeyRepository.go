@@ -5,11 +5,10 @@ import (
 	"aggron/internal/types"
 	"context"
 	"fmt"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type FileKeyRepository struct {
@@ -22,9 +21,23 @@ func NewFileKeyRepository(db *mongo.Database) *FileKeyRepository {
 	}
 }
 
+func (r *FileKeyRepository) CreateIndexes(ctx context.Context) error {
+	// set ttl
+	ttlIndex := mongo.IndexModel{
+		Keys:    bson.D{{Key: "created_at", Value: 1}},
+		Options: options.Index().SetExpireAfterSeconds(int32(types.DefaultExpirationTime.Seconds())),
+	}
+
+	_, err := r.collection.Indexes().CreateOne(ctx, ttlIndex)
+
+	if err != nil {
+		return fmt.Errorf("failed to create indexes: %w", err)
+	}
+
+	return nil
+}
+
 func (r *FileKeyRepository) CreateFileKey(ctx context.Context, fileKey models.FileKey) (*models.FileKey, error) {
-	fileKey.ExpiresAt = primitive.NewDateTimeFromTime(time.Now().Add(types.DefaultExpirationTime))
-	
 	_, err := r.collection.InsertOne(ctx, fileKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert file key: %w", err)

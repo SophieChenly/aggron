@@ -5,6 +5,7 @@ import (
 	"aggron/internal/repository"
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -63,6 +64,7 @@ func (s *FileEncryptionService) EncryptFile(
 		FileHash:          primitive.Binary{Data: fileHash},
 		SenderDiscordID:   senderDiscordID,
 		ReceiverDiscordID: receiverDiscordID,
+		CreatedAt:         time.Now(),
 	}
 
 	_, err = s.fileKeyRepo.CreateFileKey(ctx, fileKey)
